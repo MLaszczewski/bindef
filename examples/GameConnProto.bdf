@@ -1,0 +1,74 @@
+type ClientWelcome {
+  protocolVersion : u32
+  sessionIdSize : u8
+  gameIdSize : u8
+  sessionId : string[sessionIdSize]
+  gameId : string[gameIdSize]
+}
+
+class ClientMessage[u8]
+
+type JoinGame is ClientMessage[0]
+
+type LeaveGame is ClientMessage[1]
+
+type EventBuffer {
+  data : buffer[u16]
+}
+
+type Control is ClientMessage[2] {
+  controlBytes:buffer[u8]
+  events:buffer[@toEnd,EventBuffer]
+}
+
+type ContinueSnapshot is ClientMessage[3] {
+  roundId : u32,
+  data : buffer[@toEnd]
+}
+type EndSnapshot is ClientMessage[4] {
+  roundId : u32,
+  data : buffer[@toEnd]
+}
+
+type AddBot is ClientMessage[250] {
+  secret:string
+  botId:string
+}
+type RemoveBot is ClientMessage[251] {
+  secret:string
+  botId:string
+}
+
+type BotControl[controlSize] {
+  playerId : u32
+  controls : buffer[controlSize]
+  events : buffer[u16,EventBuffer]
+}
+
+type BotsControls is ClientMessage[252] {
+  controlSize : u8
+  controls : buffer[@toEnd,BotControl[controlSize]]
+}
+
+class ServerMessage[u8]
+
+type ProtocolVersionMismatch is ServerMessage[23]
+
+type FrameBuffer {
+  data : buffer[u16]
+}
+
+type GameState is ServerMessage[0] {
+  roundId : u32
+  roundTs : u64
+  snapshotSize : u16
+  snapshot : buffer[snapshotSize]
+  nextFrames : buffer[@toEnd,FrameBuffer]
+}
+
+type GameFrame is ServerMessage[1] FrameBuffer
+
+type EmptyGameFrame is ServerMessage[2]
+
+type NotInGameError is ServerMessage[10]
+
